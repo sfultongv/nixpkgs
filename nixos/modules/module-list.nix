@@ -263,6 +263,7 @@
   ./services/ttys/agetty.nix
   ./services/ttys/gpm.nix
   ./services/ttys/kmscon.nix
+  ./services/web-servers/aem.nix
   ./services/web-servers/apache-httpd/default.nix
   ./services/web-servers/fcgiwrap.nix
   ./services/web-servers/jboss/default.nix

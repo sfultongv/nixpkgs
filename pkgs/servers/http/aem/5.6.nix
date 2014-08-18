@@ -1,4 +1,4 @@
-{ stdenv, requireFile, oraclejdk7, curl }:
+{ stdenv, requireFile, oraclejdk7, curl, bash }:
 
 let 
   version = "5.6.1";
@@ -6,7 +6,6 @@ let
 
 in stdenv.mkDerivation rec {
   name = "aem-${version}"; 
-  runmode_ = runmode;
   checkpath = if runmode == "author" 
     then "/libs/granite/core/content/login.html"
     else "/"; 
@@ -26,7 +25,8 @@ in stdenv.mkDerivation rec {
 
   builder = ./builder.sh;
 
-  inherit oraclejdk7 curl;
+  inherit curl bash runmode;
+  java = oraclejdk7;
   
   meta = {
     description = "Adobe Experience Manager CMS";

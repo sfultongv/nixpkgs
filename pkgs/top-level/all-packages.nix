@@ -7016,7 +7016,7 @@ let
   tomcat_mysql_jdbc = callPackage ../servers/http/tomcat/jdbc/mysql { };
 
   aem56 = import ../servers/http/aem/5.6.nix {
-    inherit stdenv requireFile oraclejdk7 curl;
+    inherit stdenv requireFile oraclejdk7 curl bash;
   };
 
   axis2 = callPackage ../servers/http/tomcat/axis2 { };
