@@ -1,10 +1,11 @@
+{ runmode }:
 { config, lib, pkgs, ... }:
 
 with lib;
 
 let
-  cfg = config.services.aem;
-  aem = pkgs.aem56;
+  cfg = config.services.aem."${runmode}";
+  aem = pkgs."aem-${runmode}";
   java = pkgs.oraclejdk7;
   crx = "${cfg.directory}/crx-quickstart";
 in
@@ -12,7 +13,7 @@ in
 { 
   #### interface
   options = {
-    services.aem = {
+    services.aem."${runmode}" = {
 
       enable = mkOption {
         default = false;
@@ -20,27 +21,38 @@ in
       };
 
       directory = mkOption {
-        default = "/var/aem";
+        default = "/var/aem/${runmode}";
         description = "Directory where AEM should be deployed";
       };
 
+      port = mkOption {
+        default = if runmode == "author"
+          then "4502"
+          else "4503";
+        description = "TCP port to listen on";
+      };
+
+      heap = mkOption {
+        default = "2g";
+        description = "Amount of heap memory to give AEM";
+      };
     };
   };
 
   #### implementation
-  config = mkIf config.services.aem.enable {
+  config = mkIf cfg.enable {
 
-    users.extraGroups = singleton {
-      name = "aem";
-      gid = config.ids.gids.aem;
-    };
+    #users.extraGroups = singleton {
+    #  name = "aem";
+    #  gid = config.ids.gids.aem;
+    #};
 
-    users.extraUsers = singleton {
-      name = "aem";
-      uid = config.ids.uids.aem;
-    };
+    #users.extraUsers = singleton {
+    #  name = "aem";
+    #  uid = config.ids.uids.aem;
+    #};
 
-    systemd.services.aem = {
+    systemd.services."aem-${runmode}" = {
       description = "Adobe Experience Manager";
       after = [ "network.target" ];
       wantedBy = [ "multi-user.target" ];
@@ -55,13 +67,13 @@ in
 
            # create start/stop scripts
            CQ_JVM_OPTS="-server \
-             -Xmx2g -XX:PermSize=256m -XX:MaxPermSize=288m \
+             -Xmx${cfg.heap} -XX:PermSize=256m -XX:MaxPermSize=288m \
              -Djava.awt.headless=true \
              -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC \
              -Dorg.apache.jackrabbit.core.state.validatehierarchy=true \
              -Djava.net.preferIPv4Stack=true \
              -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/cq/dumps"
-           START_OPTS="-c ${crx} -i launchpad -p 4502 -Dsling.run.modes=author"
+           START_OPTS="-c ${crx} -i launchpad -p ${cfg.port} -Dsling.run.modes=${runmode}"
            cat > ${crx}/bin/start << EOF
 #!${pkgs.bash}/bin/bash
 ${java}/bin/java $CQ_JVM_OPTS -jar ${crx}/app/cq-quickstart-5.6.1-standalone.jar $START_OPTS & echo $! > ${crx}/conf/cq.pid

@@ -1,14 +1,13 @@
+{ runmode, port, checkpath }:
 { stdenv, requireFile, oraclejdk7, curl, bash }:
 
 let 
   version = "5.6.1";
-  runmode = "author";
+  deriveHotfix = hotfix: requireFile (hotfix // { url = "sourcecontrol"; });
+  hotfixes = map deriveHotfix (import ./hotfixes.nix);
 
 in stdenv.mkDerivation rec {
   name = "aem-${version}"; 
-  checkpath = if runmode == "author" 
-    then "/libs/granite/core/content/login.html"
-    else "/"; 
 
   src = requireFile {
     name = "aem-quickstart-${version}.jar";
@@ -25,11 +24,11 @@ in stdenv.mkDerivation rec {
 
   builder = ./builder.sh;
 
-  inherit curl bash runmode;
+  inherit curl bash runmode port checkpath hotfixes;
   java = oraclejdk7;
   
   meta = {
-    description = "Adobe Experience Manager CMS";
+    description = "Adobe Experience Manager CMS - ${runmode} instance";
     license = stdenv.lib.licenses.unfree;
   };
 }
