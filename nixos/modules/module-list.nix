@@ -274,6 +274,7 @@
   ./services/web-servers/nginx/default.nix
   ./services/web-servers/phpfpm.nix
   ./services/web-servers/tomcat.nix
+  ./services/web-servers/rwjf-tomcat.nix
   ./services/web-servers/varnish/default.nix
   ./services/web-servers/winstone.nix
   ./services/web-servers/zope2.nix

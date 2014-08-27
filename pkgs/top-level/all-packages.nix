@@ -8049,6 +8049,8 @@ let
 
   poppler_data = callPackage ../data/misc/poppler-data { };
 
+  rwjf_source_solr = callPackage ../data/misc/rwjf/solr.nix { };
+
   r3rs = callPackage ../data/documentation/rnrs/r3rs.nix { };
 
   r4rs = callPackage ../data/documentation/rnrs/r4rs.nix { };
