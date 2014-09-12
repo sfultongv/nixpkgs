@@ -3,8 +3,9 @@
 
 let 
   version = "5.6.1";
-  deriveHotfix = hotfix: requireFile (hotfix // { url = "sourcecontrol"; });
-  hotfixes = map deriveHotfix (import ./hotfixes.nix);
+  deriveInclude = hotfix: requireFile (hotfix // { url = "sourcecontrol"; });
+  hotfixes = map deriveInclude (import ./hotfixes.nix);
+  osgiBundles = map deriveInclude (import ./osgi.nix);
 
 in stdenv.mkDerivation rec {
   name = "aem-${version}"; 
@@ -24,7 +25,7 @@ in stdenv.mkDerivation rec {
 
   builder = ./builder.sh;
 
-  inherit curl bash runmode port checkpath hotfixes;
+  inherit curl bash runmode port checkpath hotfixes osgiBundles;
   java = oraclejdk7;
   
   meta = {

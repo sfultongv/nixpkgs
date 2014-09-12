@@ -18,6 +18,11 @@ do
   echo "AEM response: $status"
 done
 
+# install osgi bundles
+for i in $osgiBundles; do
+  echo "installing $i"
+  $curl/bin/curl -u admin:admin -F action=install -F bundlestartlevel=20 -F bundlestart=start -F bundlefile=@$i -s localhost:$port/system/console/bundles
+done
 
 # shut down AEM
 kill -15 `cat $TMP/pid`
@@ -28,5 +33,8 @@ for i in $hotfixes; do
   original=$(echo $i | sed 's/[^-]*-//')
   cp $i $out/crx-quickstart/install/$original
 done
+
+# make sure sun jars are included in osgi
+echo "sling.bootdelegation.com.sun=com.sun.*" >> $out/crx-quickstart/conf/sling.properties
 
 exit 0
