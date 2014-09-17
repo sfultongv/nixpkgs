@@ -266,6 +266,7 @@
   ./services/web-servers/aem/author.nix
   ./services/web-servers/aem/publish.nix
   ./services/web-servers/apache-httpd/default.nix
+  ./services/web-servers/apache-httpd/rwjf.nix
   ./services/web-servers/fcgiwrap.nix
   ./services/web-servers/jboss/default.nix
   ./services/web-servers/lighttpd/cgit.nix
