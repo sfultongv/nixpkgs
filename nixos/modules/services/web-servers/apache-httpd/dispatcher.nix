@@ -1,3 +1,11 @@
+{ authorHost, publishHost, docRoot }:
+
+assert authorHost != null;
+assert publishHost != null;
+assert docRoot != null;
+
+builtins.toFile "dispatcher.conf"
+
 ''
 # name of the dispatcher
 /name "rwjf-dispatcher"
@@ -28,7 +36,7 @@
 			#   www.company.com
 			#   intranet.*
 			#   myhost:8888/mysite
-			"*"
+			"${publishHost}"
 			}
 
 		# The load will be balanced among these render instances
@@ -175,6 +183,8 @@
 			/0303 { /type "allow" /glob "POST */j_security_check *" }
 			/0304 { /type "allow" /glob "POST /content/rwjf/en/manage-subscriptions/_jcr_content.confirm.html *" }
 			
+			# Deny groovy console vanity
+			/0305 { /type "deny"  /glob "GET /groovyconsole*" }
 			}
 
 		#/sessionmanagement
@@ -189,7 +199,7 @@
 			# dispatcher will store files relative to this directory and subsequent
 			# requests may be "declined" by the dispatcher, allowing the webserver
 			# to deliver them just like static files.
-			/docroot "/srv/www/htdocs/pub"
+			/docroot "${docRoot}"
 
 			# Sets the level upto which files named ".stat" will be created in the
 			# document root of the webserver. When an activation request for some
@@ -289,9 +299,14 @@
 				/0000
 					{
 					/glob "*"
-					/type "allow"
+					/type "deny"
 					}
 				/0001
+					{
+					/glob "172.20.10.191"
+					/type "allow"
+					}
+				/0002
 					{
 					/glob "127.0.0.1"
 					/type "allow"
@@ -370,7 +385,7 @@
 			#   www.company.com
 			#   intranet.*
 			#   myhost:8888/mysite
-			"authoring.rwjf-trunk.christopherl.com"
+			"${authorHost}"
 			}
 
 		# The load will be balanced among these render instances
@@ -397,23 +412,23 @@
 				/type "allow"
 				}
 			# Deny external access to system console
-			#/0001
-			#	{
-			#	/glob "* /system/*"
-			#	/type "deny"
-			#	}
+			/0001
+				{
+				/glob "* /system/*"
+				/type "deny"
+				}
 			# Deny external access to CRX web application
-			#/0002
-			#	{
-			#	/glob "* /crx*"
-			#	/type "deny"
-			#	}
+			/0002
+				{
+				/glob "* /crx*"
+				/type "deny"
+				}
 			# Deny external access to servlet engine console
-			#/0003
-			#	{
-			#	/glob "* /admin/*"
-			#	/type "deny"
-			#	}
+			/0003
+				{
+				/glob "* /admin/*"
+				/type "deny"
+				}
 			}
 
 		# enable session management
@@ -432,7 +447,7 @@
 			# dispatcher will store files relative to this directory and subsequent
 			# requests may be "declined" by the dispatcher, allowing the webserver
 			# to deliver them just like static files.
-			/docroot "/srv/www/htdocs/auth"
+			/docroot "/var/www/auth"
 
 			# Sets the level upto which files named ".stat" will be created in the
 			# document root of the webserver. When an activation request for some
@@ -520,5 +535,4 @@
 			}
 		}
 	}
-
 ''

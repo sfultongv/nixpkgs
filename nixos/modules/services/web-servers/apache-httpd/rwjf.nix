@@ -12,7 +12,11 @@ let
 
   httpdConf = mainCfg.configFile;
 
-  dispatcherConf = builtins.toFile "dispatcher.conf" (import ./dispatcher.nix);
+  dispatcherConf = import ./dispatcher.nix { 
+     docRoot = mainCfg.documentRoot;  
+     authorHost = "not.happening.com";
+     publishHost = "*";
+  };
 
   php = pkgs.php.override { apacheHttpd = httpd; };
 
@@ -368,7 +372,7 @@ let
     # dispatcher configuration
     <IfModule disp_apache2.c>
         # location of the configuration file. eg: 'conf/dispatcher.any'
-        DispatcherConfig ${mainCfg.stateDir}/dispatcher.conf
+        DispatcherConfig ${dispatcherConf}
 
         # location of the dispatcher log file. eg: 'logs/dispatcher.log'
         DispatcherLog    /var/aem/dispatcher.log
@@ -407,6 +411,18 @@ let
         '';
       in concatMapStrings makeVirtualHost mainCfg.virtualHosts
     }
+
+    # only one web root, set it here
+    <Directory ${mainCfg.documentRoot}>
+      <IfModule disp_apache2.c>
+        SetHandler dispatcher-handler
+        ModMimeUsePathInfo On
+      </IfModule>
+      Options Indexes FollowSymLinks Includes
+      AllowOverride None
+      Order allow,deny
+      allow from all
+    </Directory>
   '';
 
 
@@ -673,7 +689,6 @@ in
               mkdir -m 0750 -p "${mainCfg.stateDir}/runtime"
               [ $(id -u) != 0 ] || chown root.${mainCfg.group} "${mainCfg.stateDir}/runtime"
             ''}
-            cp ${dispatcherConf} ${mainCfg.stateDir}/dispatcher.conf
             mkdir -m 0700 -p ${mainCfg.logDir}
 
             ${optionalString (mainCfg.documentRoot != null)
