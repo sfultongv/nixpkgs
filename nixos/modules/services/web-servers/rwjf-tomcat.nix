@@ -63,7 +63,7 @@ let
   setenv = builtins.toFile "setenv.sh"
     ''
      export CATALINA_OPTS="$CATALINA_OPTS -Djava.awt.headless=true -Xmx${cfg.heap} -server -Xmn512m -XX:PermSize=512m -XX:MaxPermSize=512m -XX:NewSize=756m -XX:MaxNewSize=756m -XX:SurvivorRatio=4 -XX:+UseConcMarkSweepGC -XX:+CMSClassUnloadingEnabled"
-     export CLASSPATH="$CLASSPATH:/var/search/lib/log/*"
+     export CLASSPATH="$CLASSPATH:/var/search/author/lib/log/*"
 
     '';
   makeCore = { typeName, coreName, solrconfig }: 
