@@ -9,14 +9,21 @@ let
   solr = pkgs.solr;
   java = pkgs.oraclejdk7;
   rwjf-solr = pkgs.rwjf_source_solr;
-  solr-context = builtins.toFile "solr.xml" 
+  schema = builtins.toFile "schema.xml" cfg.schema;
+  makeSolrContext = serverType: builtins.toFile "solr.xml"
     ''
       <?xml version="1.0" encoding="utf-8"?>
       <Context crossContext="true">
-        <Environment name="solr/home" type="java.lang.String" value="/var/search" override="true"/>
+        <Environment name="solr/home" type="java.lang.String" value="/var/search/${serverType}" override="true"/>
       </Context>
 
     '';
+  deployWar = type:
+    ''
+    cp ${solr}/lib/solr.war /var/tomcat/webapps/solr-${type}.war
+    cp ${makeSolrContext type} /var/tomcat/conf/Catalina/localhost/solr-${type}.xml
+    '';
+  deployedWars = concatMapStrings deployWar (builtins.attrNames cfg.wars);
   server-xml = builtins.toFile "server.xml"
     ''
     <?xml version='1.0' encoding='utf-8'?>
@@ -59,15 +66,31 @@ let
      export CLASSPATH="$CLASSPATH:/var/search/lib/log/*"
 
     '';
-  makeCore = { coreName, cfgName }: 
+  makeCore = { typeName, coreName, solrconfig }: 
+    let coreDir = "/var/search/${typeName}/cores/${coreName}";
+    in
     ''
-    cp -a ${rwjf-solr}/files/home/cores/main /var/search/cores/${coreName}
-    echo -e "name=${coreName}\n" > /var/search/cores/${coreName}/core.properties
-    cp ${rwjf-solr}/files/solrconfig.xml.${cfgName} /var/search/cores/${coreName}/conf/solrconfig.xml
+    mkdir -p ${coreDir}/conf
+    cp -a ${rwjf-solr}/home/cores/main/* ${coreDir}
+    echo -e "name=${coreName}\n" > ${coreDir}/core.properties
+    cp ${builtins.toFile "solrconfig.xml" solrconfig} ${coreDir}/conf/solrconfig.xml
+    # copy over schema
+    cp ${schema} ${coreDir}/conf
     '';
-  authorCores = concatMapStrings makeCore [ { coreName = "main"; cfgName = "author"; } { coreName = "reporting"; cfgName = "reporting"; } ];
-  publishCores = concatMapStrings makeCore [ { coreName = "main"; cfgName = "publish"; } ];
-
+  deployCores = typeName: coreSet: 
+    let cores = concatStrings
+            (mapAttrsToList (coreName: solrconfig: makeCore { inherit typeName coreName solrconfig; }) coreSet);
+    in 
+    ''
+      if [ ! -d /var/search/${typeName} ]; then
+         # copy data from rwjf source
+         mkdir -p /var/search/${typeName}
+         cp -a ${rwjf-solr}/lib /var/search/${typeName}/lib
+         cp ${rwjf-solr}/home/solr.xml /var/search/${typeName}
+         cp ${rwjf-solr}/home/zoo.cfg /var/search/${typeName}
+         ${cores}
+      fi 
+    '';
 in
 
 {
@@ -76,21 +99,25 @@ in
   options = {
     services.rwjf-tomcat = {
 
-      enable = mkOption {
-        default = false;
-        description = "Whether to enable Apache Tomcat (for solr)";
+      wars = mkOption {
+        default = {};
+        description = "a property list of war names and their cores with associated configurations";
       };
 
       heap = mkOption {
         default = "2G";
         description = "amount of heap space to give Tomcat";
       };
+      schema = mkOption {
+        default = "";
+        description = "The schema.xml for all solr instances";
+      };
     };
   };
 
 
   ###### implementation
-  config = mkIf cfg.enable {
+  config = mkIf (cfg.wars != {}) {
     systemd.services.rwjf-tomcat = {
       description = "Tomcat running Solr";
       after = [ "network.target" ];
@@ -104,28 +131,21 @@ in
           cp -a ${tomcat}/* /var/tomcat
           # use our custom server.xml
           cp ${server-xml} /var/tomcat/conf/server.xml
-          # deploy war file
-          cp ${solr}/lib/solr.war /var/tomcat/webapps/solr-author.war
-          # copy war configuration
-          cp ${solr-context} /var/tomcat/conf/Catalina/localhost/solr-author.xml
+
+          # deploy enabled war files
+          ${deployedWars}
+
           # copy file to set environment variables
           cp ${setenv} /var/tomcat/bin/setenv.sh
           chmod u+x /var/tomcat/bin/setenv.sh
         fi
 
-        
-        if [ ! -d /var/search ]; then
-          # create solr directory, if it doesn't exist
-          mkdir -p /var/search/cores
-          # copy data from rwjf source
-          cp -a ${rwjf-solr}/files/lib /var/search/lib
-          cp ${rwjf-solr}/files/home/solr.xml /var/search
-          cp ${rwjf-solr}/files/home/zoo.cfg /var/search
-          ${authorCores}
-          # make sure solr has write access to core directories 
-          chmod -R u+w /var/search/cores
-
-        fi 
+        # deploy cores for each solr type (author/publish)
+        ${
+          concatStrings (mapAttrsToList deployCores cfg.wars)
+        }
+        # make sure solr has write access to core directories 
+        chmod -R u+w /var/search
         '';
       environment = {
         JAVA_HOME = java;

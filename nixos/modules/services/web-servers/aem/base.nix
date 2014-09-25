@@ -85,7 +85,7 @@ EOF
          fi
 
          # make sure all files have correct ownership
-         chown -R aem:aem ${cfg.directory}
+         # chown -R aem:aem ${cfg.directory}
         '';
          
       serviceConfig = {

@@ -1,6 +1,6 @@
 {
     name = "rwjf-solr.tar.gz";
     url = "provided";
-    sha256 = "a59f91e85a46f72a95177451d82be3fdb698af67477a087b170ccf2c20e311be";
+    sha256 = "53598b0bedde5d5e41b04d96fe307ca772e9ce7f72e658d01720c4d6af06817e";
 }
 
