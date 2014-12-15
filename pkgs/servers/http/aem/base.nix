@@ -2,7 +2,7 @@
 { stdenv, requireFile, oraclejdk7, curl, bash }:
 
 let 
-  version = "5.6.1";
+  version = "6.0";
   deriveInclude = hotfix: requireFile (hotfix // { url = "sourcecontrol"; });
   hotfixes = map deriveInclude (import ./hotfixes.nix);
   osgiBundles = map deriveInclude (import ./osgi.nix);
@@ -11,9 +11,10 @@ in stdenv.mkDerivation rec {
   name = "aem-${version}"; 
 
   src = requireFile {
-    name = "aem-quickstart-${version}.jar";
+    #name = "aem-quickstart-${version}.jar";
+    name = "AEM_${version}_Quickstart.jar";
     url = "gdrive/somewhere";
-    sha256 = "cd7f4d02bbbb56b43f41937f4617f4dd2da56b2b6c2d353a504d0cca3284298a";
+    sha256 = "f91cd4d7044c03509b253fd5377253081e201460be9de800b9610d51b5836deb";
   };
   jarname = baseNameOf src;
 

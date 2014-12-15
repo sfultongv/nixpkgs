@@ -8,6 +8,7 @@ let
   aem = pkgs."aem-${runmode}";
   java = pkgs.oraclejdk7;
   crx = "${cfg.directory}/crx-quickstart";
+  version = "6.0.0";
 in
 
 { 
@@ -76,7 +77,7 @@ in
            START_OPTS="-c ${crx} -i launchpad -p ${cfg.port} -Dsling.run.modes=${runmode}"
            cat > ${crx}/bin/start << EOF
 #!${pkgs.bash}/bin/bash
-${java}/bin/java $CQ_JVM_OPTS -jar ${crx}/app/cq-quickstart-5.6.1-standalone.jar $START_OPTS & echo $! > ${crx}/conf/cq.pid
+${java}/bin/java $CQ_JVM_OPTS -jar ${crx}/app/cq-quickstart-${version}-standalone.jar $START_OPTS & echo $! > ${crx}/conf/cq.pid
 EOF
 
          fi
