@@ -6,7 +6,7 @@ source $stdenv/setup
 mkdir $out
 cp $src $out
 cp $license $out/license.properties
-$java/bin/java -server -XX:MaxPermSize=266M -Xmx1124m -jar $out/$jarname -r $runmode,nosamplecontent -p $port & echo $! > $TMP/pid
+$java/bin/java -server -XX:MaxPermSize=266M -Xmx1124m -jar $out/$jarname -r $runmode,crx2,nosamplecontent -p $port & echo $! > $TMP/pid
 
 # wait until installation complete
 status=500
